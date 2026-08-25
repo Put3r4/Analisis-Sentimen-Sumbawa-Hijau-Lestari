@@ -10,7 +10,6 @@ __pycache__/
 # ==========================================
 # Virtual Environment Folder
 # ==========================================
-ksp_sumbawa/
 env/
 venv/
 ENV/
@@ -21,9 +20,9 @@ venv.bak/
 # ==========================================
 # Data Files
 # ==========================================
-data/*
-!data/**/README.md
-!data/**/.gitkeep
+# Seluruh isi folder data/ (dataset, processed_dataset, labelled) sengaja
+# TIDAK diabaikan untuk proyek ini, karena data hasil scraping, cleaning,
+# dan pelabelan justru ingin ikut dipublish ke GitHub.
 
 # ==========================================
 # Model Binaries (Opsional: Abaikan file model joblib jika tidak ingin dipublish)
