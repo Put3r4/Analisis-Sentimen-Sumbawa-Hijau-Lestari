@@ -1,9 +1,9 @@
-Kategori Isu,Positif,Netral,Negatif,Total
-Obrolan/Balasan Personal,65,166,0,231
-Apresiasi/Dukungan Program,63,0,0,63
-Kritik Kebijakan & Isu Terkait,1,0,28,29
-Pertanyaan/Klarifikasi Program,0,20,0,20
-Saran Teknis Pelaksanaan,2,15,0,17
-Kritik/Skeptisisme Keberlanjutan,0,0,17,17
-Informasi/Netral,0,13,0,13
-Spam/Promosi,0,11,0,11
+Kategori Isu,Positif,Netral,Negatif
+Apresiasi/Dukungan Program,63,0,0
+Informasi/Netral,0,13,0
+Kritik Kebijakan & Isu Terkait,1,0,28
+Kritik/Skeptisisme Keberlanjutan,0,0,17
+Obrolan/Balasan Personal,65,166,0
+Pertanyaan/Klarifikasi Program,0,20,0
+Saran Teknis Pelaksanaan,2,15,0
+Spam/Promosi,0,11,0

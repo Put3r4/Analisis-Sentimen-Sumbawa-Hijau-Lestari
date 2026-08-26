@@ -24,11 +24,12 @@ Analisis sentimen publik terhadap program penghijauan Pemerintah Kabupaten Sumba
 | Metrik | Nilai |
 |---|---|
 | Sumber data | 54 postingan Facebook |
-| Data mentah | 436 baris |
-| Data bersih dianalisis | 401 baris |
+| Data mentah | 436 baris (Rata-rata 8.07 komentar/post) |
+| Data bersih dianalisis | 401 baris (Rata-rata 7.43 komentar/post) |
 | Sentimen dominan | Netral (56.11%) |
-| Kategori isu terbanyak | Obrolan/Balasan Personal (57.61%) |
-| Kategori paling kritis | Kritik/Skeptisisme Keberlanjutan (100% negatif) |
+| Dominasi Aspek Person | Obrolan/Balasan Personal (57.61%) |
+| Respon Eksplisit Aspek Program | 63 Apresiasi vs 46 Kritik (Positif : Negatif) |
+| Tingkat Interaksi (Likes) | Rata-rata 0.41 like/komentar, 3.00 likes/post |
 
 ## 1. Ringkasan Proyek
 
@@ -62,14 +63,18 @@ Analisis-Sentimen-Sumbawa-Hijau-Lestari/
 │   │   │   ├── 04_jenis_komentar_sentimen.png
 │   │   │   ├── 05_top10_nama_sumber_sentimen.png
 │   │   │   ├── 06_tren_sentimen_bulanan.png
-│   │   │   └── 07_top_words_kategori_kritis.png
+│   │   │   ├── 07_top_words_kategori_kritis.png
+│   │   │   ├── 08_keterlibatan_per_postingan.png
+│   │   │   └── 09_wordcloud_kategori_kritis.png
 │   │   ├── crosstab_jenis_komentar_sentimen.csv
 │   │   ├── crosstab_kategori_sentimen.csv
 │   │   ├── dataset_siap_label_sumbawa_hijau_lestari.xlsx
+│   │   ├── ringkasan_keterlibatan_postingan.csv
 │   │   ├── ringkasan_statistik_sentimen.csv
 │   │   └── top_words_kritis.csv
 │   └── labelled/
-│       └── dataset_siap_label_sumbawa_hijau_lestari_labelled.xlsx
+│       ├── dataset_siap_label_sumbawa_hijau_lestari_labelled.xlsx
+│       └── dataset_siap_label_sumbawa_hijau_lestari_labelled_with_like.xlsx
 ├── documents/
 ├── notebook/
 │   ├── 01_cleaning_dataset.ipynb
@@ -85,13 +90,13 @@ Fungsi setiap folder dan file utama dirangkum pada tabel berikut.
 | Folder / File | Fungsi |
 |---|---|
 | `data/dataset/` | Data mentah hasil ekstraksi menggunakan Apify Facebook Comments Scraper. `dataset_analisis_sumbawa_hijau_lestari.csv` menyimpan seluruh baris komentar mentah beserta metadata postingan. `daftar_link_sumber.csv` memuat pemetaan 54 tautan postingan Facebook beserta nama akun pembuat konten. |
-| `data/processed_dataset/` | Data hasil pembersihan yang siap dilabeli (`dataset_siap_label_sumbawa_hijau_lestari.xlsx`), beserta seluruh output analisis: tabel silang sentimen, ringkasan statistik, frekuensi kata kunci, dan sub-folder `figures/` berisi 7 grafik visualisasi format PNG. |
-| `data/labelled/` | `dataset_siap_label_sumbawa_hijau_lestari_labelled.xlsx`, dataset final hasil pelabelan manual penuh oleh peneliti. |
+| `data/processed_dataset/` | Data hasil pembersihan yang siap dilabeli (`dataset_siap_label_sumbawa_hijau_lestari.xlsx`), beserta seluruh output analisis: tabel silang sentimen, ringkasan statistik, ringkasan keterlibatan postingan (`ringkasan_keterlibatan_postingan.csv`), frekuensi kata kunci, dan sub-folder `figures/` berisi 9 grafik visualisasi format PNG. |
+| `data/labelled/` | Dataset final hasil pelabelan manual penuh oleh peneliti (`dataset_siap_label_sumbawa_hijau_lestari_labelled.xlsx` dan versi dilengkapi jumlah like `dataset_siap_label_sumbawa_hijau_lestari_labelled_with_like.xlsx`). |
 | `documents/` | Dokumen pendukung proyek, catatan metodologi, dan referensi prompt analisis. |
 | `notebook/01_cleaning_dataset.ipynb` | Tahap pembersihan data mentah. |
-| `notebook/02_analisis_sentimen.ipynb` | Tahap validasi label, kalkulasi statistik deskriptif, analisis silang, serta visualisasi grafik. |
+| `notebook/02_analisis_sentimen.ipynb` | Tahap validasi label, kalkulasi statistik deskriptif, analisis ABSA, analisis keterlibatan postingan, serta visualisasi grafik dan wordcloud. |
 | `.gitignore` | Konfigurasi pengecualian file atau folder temporer agar tidak ikut tercatat oleh git. |
-| `README.md` | Dokumentasi utama proyek yang menjelaskan metodologi, hasil analisis, serta panduan proyek. |
+| `README.md` | Dokumentasi utama proyek yang menjelaskan metodologi, kerangka ABSA, hasil analisis, serta panduan proyek. |
 | `requirements.txt` | Daftar pustaka Python yang dibutuhkan untuk menjalankan kode program. |
 | `SET_UP.md` | Petunjuk teknis penyiapan lingkungan kerja virtual dan tata cara eksekusi ulang proyek. |
 
@@ -124,7 +129,7 @@ Komentar bersih ini terbagi menjadi dua jenis berikut.
 
 Selain itu, dilakukan penandaan terhadap 10 baris kandidat spam untuk diverifikasi secara manual.
 
-### 5.3 Pelabelan Data
+### 5.3 Pelabelan Data & Kerangka Aspect-Based Sentiment Analysis (ABSA)
 
 Setiap komentar bersih diberi dua atribut label, yaitu Kategori Isu dan Sentimen. Pelabelan awal dibantu oleh usulan berbasis kata kunci untuk mempercepat penelaahan awal, namun keputusan label akhir ditentukan sepenuhnya melalui peninjauan manual oleh peneliti terhadap setiap isi komentar.
 
@@ -143,9 +148,32 @@ Skema Kategori Isu terdiri atas delapan kelas berikut.
 
 Skema Sentimen terdiri atas tiga kelas, yaitu Positif, Netral, dan Negatif.
 
+#### Kerangka Aspect-Based Sentiment Analysis (ABSA)
+
+Sentimen dalam dataset ini dinilai berdasarkan pendekatan **Aspect-Based Sentiment Analysis (ABSA)**, yaitu memisahkan objek penilaian menjadi dua aspek:
+1. **Person**: Figur/akun pengunggah postingan (misalnya pejabat, instansi, atau warga).
+2. **Program**: Substansi kebijakan "Sumbawa Hijau Lestari" itu sendiri.
+
+Label Sentimen pada dataset ini secara konsisten mengacu pada **aspek Program**, bukan aspek Person. Konsekuensinya, komentar yang menunjukkan dukungan hangat kepada pengunggah postingan (misalnya ucapan semangat kepada pejabat atau warga yang menanam pohon) tetap diberi label **Netral** apabila komentar tersebut tidak menyatakan sikap eksplisit terhadap substansi program.
+
+Pemetaan kategori isu terhadap aspek yang dinilai disajikan pada tabel berikut.
+
+| Kategori Isu | Aspek yang Dinilai |
+|---|---|
+| Obrolan/Balasan Personal | Person (pengunggah) |
+| Apresiasi/Dukungan Program | Program |
+| Kritik Kebijakan & Isu Terkait | Program |
+| Pertanyaan/Klarifikasi Program | Program |
+| Saran Teknis Pelaksanaan | Program |
+| Kritik/Skeptisisme Keberlanjutan | Program |
+| Informasi/Netral | Program |
+| Spam/Promosi | Tidak relevan (dikeluarkan dari interpretasi aspek) |
+
+> **Tegasan Kunci:** proporsi sentimen Netral yang tinggi pada dataset ini sebagian besar berasal dari volume komentar yang menyasar aspek Person, bukan indikasi sikap netral masyarakat terhadap Program.
+
 ### 5.4 Analisis dan Penggalian Insight
 
-Tahap akhir dilaksanakan pada notebook `notebook/02_analisis_sentimen.ipynb`. Analisis dilakukan dengan menghitung distribusi statistik sentimen dan kategori isu, analisis silang antara jenis komentar dengan sentimen, perbandingan sentimen antar sumber postingan, tren sentimen bulanan, serta ekstraksi frekuensi kata kunci pada kelompok komentar yang bersifat kritis.
+Tahap akhir dilaksanakan pada notebook `notebook/02_analisis_sentimen.ipynb`. Analisis dilakukan dengan menghitung distribusi statistik sentimen dan kategori isu, analisis kerangka ABSA, analisis keterlibatan postingan (komentar mentah vs bersih, sebaran per postingan, dan rata-rata like), tren sentimen bulanan, serta visualisasi frekuensi kata kunci dan wordcloud pada kelompok komentar yang bersifat kritis.
 
 ## 6. Akurasi dan Kualitas Data
 
@@ -167,19 +195,34 @@ Terdapat dua keterbatasan utama pada data ini.
 | Negatif | 45 | 11.22% |
 | **Total** | **401** | **100%** |
 
-### Distribusi Kategori Isu
+### Distribusi Kategori Isu & Pemetaan Aspek
 
-| Kategori Isu | Jumlah | Persentase | Sentimen Dominan |
-|---|---|---|---|
-| Obrolan/Balasan Personal | 231 | 57.61% | Netral (166) dan Positif (65) |
-| Apresiasi/Dukungan Program | 63 | 15.71% | Positif (100%) |
-| Kritik Kebijakan & Isu Terkait | 29 | 7.23% | Negatif (28 dari 29) |
-| Pertanyaan/Klarifikasi Program | 20 | 4.99% | Netral (100%) |
-| Saran Teknis Pelaksanaan | 17 | 4.24% | Netral (15) dan Positif (2) |
-| Kritik/Skeptisisme Keberlanjutan | 17 | 4.24% | Negatif (100%) |
-| Informasi/Netral | 13 | 3.24% | Netral (100%) |
-| Spam/Promosi | 11 | 2.74% | Netral (100%) |
-| **Total** | **401** | **100%** | |
+| Kategori Isu | Jumlah | Persentase | Aspek | Sentimen Dominan |
+|---|---|---|---|---|
+| Obrolan/Balasan Personal | 231 | 57.61% | Person | Netral (166) dan Positif (65) |
+| Apresiasi/Dukungan Program | 63 | 15.71% | Program | Positif (100%) |
+| Kritik Kebijakan & Isu Terkait | 29 | 7.23% | Program | Negatif (28 dari 29) |
+| Pertanyaan/Klarifikasi Program | 20 | 4.99% | Program | Netral (100%) |
+| Saran Teknis Pelaksanaan | 17 | 4.24% | Program | Netral (15) dan Positif (2) |
+| Kritik/Skeptisisme Keberlanjutan | 17 | 4.24% | Program | Negatif (100%) |
+| Informasi/Netral | 13 | 3.24% | Program | Netral (100%) |
+| Spam/Promosi | 11 | 2.74% | Tidak Relevan | Netral (100%) |
+| **Total** | **401** | **100%** | | |
+
+### Ringkasan Keterlibatan (Engagement) Postingan
+
+- **Total Komentar Mentah**: 436 komentar (Rata-rata: 8.07 komentar per postingan dari 54 postingan).
+- **Total Komentar Bersih**: 401 komentar (Rata-rata: 7.43 komentar per postingan).
+- **Postingan Komentar Terbanyak**: 22 komentar bersih (Iwan Sofian).
+- **Postingan Komentar Tersedikit**: 0 komentar (5 postingan yang tidak aktif/tidak dapat diakses).
+- **Rata-rata Like per Komentar**: 0.41 likes/komentar.
+- **Rata-rata Like per Postingan**: 3.00 likes/postingan.
+
+*Visualisasi sebaran komentar per postingan tersimpan pada `data/processed_dataset/figures/08_keterlibatan_per_postingan.png`.*
+
+### Kata Kunci & Wordcloud Komentar Kritis
+
+Analisis kata kunci pada komentar kritis (`Kritik Kebijakan & Isu Terkait` dan `Kritik/Skeptisisme Keberlanjutan`) ditampilkan secara visual melalui grafik frekuensi kata (`07_top_words_kategori_kritis.png`) dan wordcloud (`09_wordcloud_kategori_kritis.png`) yang saling melengkapi.
 
 ### Tiga Pola Utama
 
@@ -187,22 +230,35 @@ Terdapat dua keterbatasan utama pada data ini.
 
 > **Skeptisisme terhadap keberlanjutan program pasca-seremoni.** Sebanyak 17 komentar pada kategori Kritik/Skeptisisme Keberlanjutan seluruhnya bersentimen negatif. Masyarakat menyuarakan kekhawatiran bahwa tanaman yang telah ditanam tidak diperhatikan pemeliharaannya sehingga berpotensi mati.
 
-> **Kritik konstruktif terkait jenis pohon dan alih fungsi lahan.** Pada 28 komentar negatif kategori Kritik Kebijakan, kata kunci paling sering muncul adalah "pohon" (13 kali), "hutan" (10 kali), "tanam" (8 kali), "bage" (7 kali), "jagung" (5 kali), dan "beringin" (4 kali). Warga menyoroti perlunya pemilihan jenis pohon berkayu keras dan tahan lama seperti asam jawa ("bage") atau beringin, serta kritik atas ketidakseimbangan antara kegiatan penghijauan di satu sisi dengan maraknya pembukaan hutan untuk tanaman jagung di sisi lain.
+> **Kritik konstruktif terkait jenis pohon dan alih fungsi lahan.** Pada komentar kritis, kata kunci paling sering muncul mencakup "tanam", "pohon", "hutan", "bage", "jagung", dan "beringin". Warga menyoroti perlunya pemilihan jenis pohon berkayu keras dan tahan lama seperti asam jawa ("bage") atau beringin, serta kritik atas ketidakseimbangan antara kegiatan penghijauan di satu sisi dengan maraknya pembukaan hutan untuk tanaman jagung di sisi lain.
 
 ## 8. Kesimpulan dan Rekomendasi
 
-Kesimpulan dari analisis ini menunjukkan bahwa respon publik di media sosial terhadap program "Sumbawa Hijau Lestari" secara umum bersifat netral hingga positif. Sentimen positif didorong oleh partisipasi aktif sekolah dan instansi pemerintah. Namun demikian, substansi kritik dari warga masyarakat berfokus pada dua isu krusial, yaitu kepastian pemeliharaan bibit tanaman jangka panjang dan penataan kebijakan lahan lereng bukit.
+### 8.1 Kesimpulan Berbasis Data
 
-Berdasarkan temuan tersebut, dirumuskan rekomendasi perbaikan bagi pemangku kepentingan Pemerintah Kabupaten Sumbawa sebagai berikut.
+1. **Pemisahan Aspek & Asal Sentimen Netral**: Setelah dipisahkan berdasarkan kerangka Aspect-Based Sentiment Analysis (ABSA), proporsi sentimen Netral yang tinggi pada dataset ini (56.11%, 225 komentar) sebagian besar berasal dari komentar yang menyasar aspek **Person** (pengunggah/figur), bukan aspek **Program**. Kategori `Obrolan/Balasan Personal` mencakup **231 dari 401 komentar (57.61%)** sebagai dasar kuantitatif utama temuan ini.
+2. **Perbandingan Respon Eksplisit Aspek Program**: Di antara komentar yang benar-benar menyasar aspek Program secara eksplisit, kelompok `Apresiasi/Dukungan Program` (**63 komentar**, seluruhnya bersentimen Positif) lebih banyak dibandingkan gabungan dua kategori kritik terhadap Program, yaitu `Kritik Kebijakan & Isu Terkait` (29 komentar) dan `Kritik/Skeptisisme Keberlanjutan` (17 komentar) yang berjumlah **46 komentar** (seluruhnya bersentimen Negatif). Perbandingan eksplisit ini mencatatkan angka **63 berbanding 46**.
+3. **Tingkat Keterlibatan (Engagement) Publik**: Tingkat keterlibatan warga terhadap program di media sosial tergolong rendah, berdasarkan tiga indikator empiris: rata-rata komentar bersih per postingan hanya sekitar **7 hingga 8 komentar** (7.43 komentar/postingan dari total 54 postingan), jumlah komentar tertinggi pada satu postingan hanya mencapai **22 komentar**, dan mayoritas komentar yang masuk (57.61%) justru menyasar aspek Person (sapaan/obrolan personal), bukan aspek Program.
 
-| No | Rekomendasi | Rasional |
+### 8.2 Catatan Interpretatif Peneliti
+
+1. **Atensi Publik terhadap Program**: Rendahnya volume komentar yang secara eksplisit membahas Program, dikombinasikan dengan dominasi komentar bernuansa dukungan personal ke pengunggah, mengindikasikan bahwa program "Sumbawa Hijau Lestari" belum berhasil menarik perhatian publik secara luas di media sosial, terlepas dari sentimen yang ada.
+2. **Dua Sudut Pandang Dominasi Apresiasi**: Di antara komentar yang secara eksplisit menyasar Program, kecenderungan apresiasi yang lebih tinggi dibanding kritik (63 berbanding 46) dapat dibaca dari dua arah yang berbeda:
+   - *Perspektif Pertama*: Sebagai sikap netral masyarakat karena minimnya komentar spesifik yang membahas program secara mendalam.
+   - *Perspektif Kedua*: Sebagai kecenderungan psikologis umum terhadap program pemerintah, yaitu warga cenderung tidak banyak memberikan tanggapan eksplisit terhadap program yang tidak mereka anggap bermasalah, sehingga rendahnya penolakan eksplisit tidak serta-merta berarti persetujuan aktif.
+3. **Status Hipotesis & Arah Penelitian Lanjutan**: Peneliti menegaskan bahwa asumsi "minimnya tanggapan negatif berarti persetujuan diam-diam terhadap program" adalah **hipotesis interpretatif**, bukan kesimpulan yang telah teruji secara statistik. Untuk memvalidasi hipotesis ini diperlukan pengujian statistik lanjutan (misalnya uji-t atau uji-z untuk membandingkan proporsi sentimen antar kelompok, atau metode inferensia lain yang relevant), yang berada di luar cakupan analisis deskriptif pada notebook ini dan menjadi arah bagi penelitian lanjutan.
+
+### 8.3 Rekomendasi Kebijakan
+
+| No | Rekomendasi | Rasional Kebijakan |
 |---|---|---|
-| 1 | Membentuk mekanisme evaluasi dan pemeliharaan berkala pasca-penanaman | Memastikan ketersediaan anggaran dan petugas pemeliharaan agar bibit yang ditanam dapat tumbuh berkelanjutan, bukan sekadar kegiatan seremoni |
-| 2 | Memilih jenis bibit pohon yang tepat dan memberikan edukasi publik | Memprioritaskan bibit tanaman lokal berakar kuat dan bermanfaat ekonomis atau ekologis panjang, seperti asam jawa ("bage") dan beringin, disertai penyampaian tata cara perawatan kepada masyarakat |
-| 3 | Menyelaraskan kebijakan penghijauan dengan penataan alih fungsi lahan pertanian | Memperketat regulasi pembukaan hutan untuk ladang jagung di area lereng dan kawasan tangkapan air, agar kegiatan penghijauan tidak kontradiktif dengan alih fungsi hutan yang masih berlangsung |
+| 1 | **Mekanisme Evaluasi & Pemeliharaan Berkala Pasca-Penanaman** | Memastikan ketersediaan anggaran dan petugas pemeliharaan agar bibit yang ditanam dapat tumbuh berkelanjutan, bukan sekadar kegiatan seremoni penanaman awal |
+| 2 | **Pemilihan Bibit Pohon Lokal & Edukasi Publik** | Memprioritaskan bibit tanaman lokal berakar kuat dan bermanfaat ekologis/ekonomis panjang, seperti asam jawa (*bage*) dan beringin, disertai penyampaian tata cara perawatan kepada masyarakat |
+| 3 | **Penyelarasan Kebijakan Penghijauan dengan Penataan Lahan** | Memperketat regulasi pembukaan hutan untuk ladang jagung di area lereng dan kawasan tangkapan air, agar kegiatan penghijauan tidak kontradiktif dengan alih fungsi hutan yang masih berlangsung |
 
 ## 9. Cara Menjalankan Ulang Proyek
 
 1. Pastikan sistem telah terinstal Python 3.9 atau versi yang lebih baru.
 2. Instal dependensi pustaka yang dibutuhkan menggunakan perintah `pip install -r requirements.txt`.
 3. Untuk petunjuk teknis penyiapan lingkungan kerja virtual dan urutan eksekusi notebook, rujuk dokumen [SET_UP.md](./SET_UP.md).
+
