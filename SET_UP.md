@@ -32,7 +32,10 @@ pip install pandas numpy openpyxl matplotlib seaborn wordcloud jupyter
 - `dataset_siap_label_sumbawa_hijau_lestari.xlsx`
 
 ### 3. Data Labelling (`data/labelled/`)
-- `dataset_siap_label_sumbawa_hijau_lestari_labelled.xlsx`
+- `dataset_siap_label_sumbawa_hijau_lestari_labelled_v3.xlsx` *(Dataset aktif terkini: gabungan 417 komentar dari 56 postingan)*
+- `dataset_siap_label_sumbawa_hijau_lestari_labelled_with_like.xlsx` *(Riwayat v2: 401 komentar dengan metadata likes)*
+- `dataset_siap_label_sumbawa_hijau_lestari_labelled.xlsx` *(Riwayat v1: 401 komentar awal)*
+- `dataset_siap_label_sumbawa_hijau_lestari_TAMBAHAN.xlsx` *(Batch tambahan: 16 komentar dari 2 postingan baru)*
 
 ## Run Cleaning Notebook
 ```
